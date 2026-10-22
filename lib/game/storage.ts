@@ -1,6 +1,6 @@
 "use client";
 
-// localStorage helpers for puzzle progress + streaks
+// localStorage helpers for puzzle progress + streaks + notebook
 
 export interface SavedDayState {
   slots: Record<string, string>; // slotKey -> filled label
@@ -14,9 +14,23 @@ export interface SavedDayState {
 
 export type SavedState = Record<string, SavedDayState>;
 
+export interface Settings {
+  dark: boolean;
+  pinyin: boolean; // 显示拼音（识字辅助）
+}
+
+// 错字本: char -> 记录
+export interface MistakeRecord {
+  char: string;
+  count: number;
+  dates: string[]; // 拼错的日期 (YYYY-MM-DD), 去重
+  lastDate: string;
+}
+
 const KEY = "hanzi-tangle-state-v1";
 const STREAK_KEY = "hanzi-tangle-streak-v1";
 const SETTINGS_KEY = "hanzi-tangle-settings-v1";
+const MISTAKES_KEY = "hanzi-tangle-mistakes-v1";
 
 export function loadSaved(): SavedState {
   try {
@@ -35,18 +49,54 @@ export function saveSaved(state: SavedState) {
   }
 }
 
-export function loadSettings(): { dark: boolean } {
+export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw ? JSON.parse(raw) : { dark: false };
+    const s = raw ? JSON.parse(raw) : {};
+    return { dark: !!s.dark, pinyin: s.pinyin !== false }; // 默认开拼音
   } catch {
-    return { dark: false };
+    return { dark: false, pinyin: true };
   }
 }
 
-export function saveSettings(s: { dark: boolean }) {
+export function saveSettings(s: Settings) {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  } catch {}
+}
+
+export function loadMistakes(): Record<string, MistakeRecord> {
+  try {
+    const raw = localStorage.getItem(MISTAKES_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, MistakeRecord>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveMistakes(m: Record<string, MistakeRecord>) {
+  try {
+    localStorage.setItem(MISTAKES_KEY, JSON.stringify(m));
+  } catch {}
+}
+
+/** 记录一次拼错 (目标字 char) */
+export function recordMistake(char: string, date: string) {
+  const all = loadMistakes();
+  const prev = all[char];
+  if (prev) {
+    prev.count += 1;
+    if (!prev.dates.includes(date)) prev.dates.push(date);
+    prev.lastDate = date;
+  } else {
+    all[char] = { char, count: 1, dates: [date], lastDate: date };
+  }
+  saveMistakes(all);
+}
+
+export function clearMistakes() {
+  try {
+    localStorage.removeItem(MISTAKES_KEY);
   } catch {}
 }
 

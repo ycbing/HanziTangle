@@ -2,6 +2,7 @@
 
 import type { HanziPuzzle, HanziTile } from "@/lib/hanzi/types";
 import { slotKey } from "@/lib/hanzi/types";
+import { CHAR_PINYIN } from "@/lib/hanzi/pinyin-map";
 
 interface Props {
   puzzle: HanziPuzzle;
@@ -10,6 +11,7 @@ interface Props {
   activeClue: number | null;
   wrongCell: { r: number; c: number; key: number } | null;
   selectedTile?: HanziTile;
+  showPinyin?: boolean;
   onCellClick: (r: number, c: number) => void;
 }
 
@@ -20,6 +22,7 @@ export default function GameBoard({
   activeClue,
   wrongCell,
   selectedTile,
+  showPinyin = false,
   onCellClick,
 }: Props) {
   // cells highlighted by active clue
@@ -117,8 +120,15 @@ export default function GameBoard({
                 </span>
               )}
               {done ? (
-                <span className="text-2xl font-bold text-white drop-shadow sm:text-3xl">
-                  {cell.char}
+                <span className="flex flex-col items-center leading-none">
+                  <span className="text-2xl font-bold text-white drop-shadow sm:text-3xl">
+                    {cell.char}
+                  </span>
+                  {showPinyin && CHAR_PINYIN[cell.char] && (
+                    <span className="text-[10px] font-semibold text-white/85 sm:text-[11px]">
+                      {CHAR_PINYIN[cell.char]}
+                    </span>
+                  )}
                 </span>
               ) : cell.split ? (
                 // split cell: left/right slots

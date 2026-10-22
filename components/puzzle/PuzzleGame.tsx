@@ -11,12 +11,14 @@ import {
   saveSettings,
   loadStreak,
   recordCompletion,
+  recordMistake,
   type SavedDayState,
 } from "@/lib/game/storage";
 import GameBoard from "./GameBoard";
 import TileTray from "./TileTray";
 import CluePanel from "./CluePanel";
 import ShareModal from "./ShareModal";
+import WordCardModal from "./WordCardModal";
 import TutorialModal from "./TutorialModal";
 
 const REVEALS = 3;
@@ -67,6 +69,7 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
   const [activeClue, setActiveClue] = useState<number | null>(null);
   const [wrongCell, setWrongCell] = useState<{ r: number; c: number; key: number } | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showWordCard, setShowWordCard] = useState(false);
   const [streak, setStreak] = useState(() => loadStreak());
   const [settings, setSettings] = useState(() => loadSettings());
   const [elapsed, setElapsed] = useState(0);
@@ -197,6 +200,8 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
       if (tile.label !== target) {
         setWrongCell({ r, c, key: Date.now() });
         window.setTimeout(() => setWrongCell(null), 600);
+        // 错字本: 记录今天拼错的目标字
+        recordMistake(cell.char, date);
         return;
       }
 
@@ -324,6 +329,24 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
           >
             📚
           </Link>
+          <Link
+            href="/notebook"
+            className="grid h-9 w-9 place-items-center rounded-full bg-white/70 hover:bg-white dark:bg-white/10 dark:hover:bg-white/20"
+            title="生字本"
+          >
+            📖
+          </Link>
+          <button
+            onClick={() => setSettings((s) => ({ ...s, pinyin: !s.pinyin }))}
+            className={`grid h-9 place-items-center rounded-full px-2 text-xs font-bold transition ${
+              settings.pinyin
+                ? "bg-teal-500 text-white"
+                : "bg-white/70 text-stone-400 hover:bg-white dark:bg-white/10"
+            }`}
+            title="拼音模式"
+          >
+            拼
+          </button>
           <div className="rounded-full bg-white/70 px-3 py-1 font-semibold dark:bg-white/10" title="连续打卡">
             🔥 {streak.current}
           </div>
@@ -387,6 +410,7 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
             activeClue={activeClue}
             wrongCell={wrongCell}
             selectedTile={selectedTile}
+            showPinyin={settings.pinyin}
             onCellClick={(r, c) => {
               if (selectedTile) {
                 placeTile(selectedTile, r, c);
@@ -447,6 +471,15 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
               >
                 分享成绩单
               </button>
+              <button
+                onClick={() => {
+                  setDismissed(true);
+                  setShowWordCard(true);
+                }}
+                className="rounded-xl bg-white py-2.5 font-semibold text-teal-600 ring-2 ring-teal-200 hover:bg-teal-50 dark:bg-stone-700 dark:text-teal-300 dark:ring-teal-500/40 dark:hover:bg-stone-600"
+              >
+                📖 看看今日字卡
+              </button>
               <Link
                 href={`/?date=${prevDate}`}
                 className="rounded-xl bg-stone-100 py-2.5 text-center font-semibold text-stone-600 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300"
@@ -462,6 +495,10 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
             </div>
           </div>
         </div>
+      )}
+
+      {showWordCard && (
+        <WordCardModal puzzle={puzzle} onClose={() => setShowWordCard(false)} />
       )}
 
       {showShare && (
