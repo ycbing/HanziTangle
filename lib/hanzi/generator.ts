@@ -32,6 +32,35 @@ function shuffle<T>(arr: T[], rnd: () => number): T[] {
   return a;
 }
 
+/** 洗牌并保证相邻砖块不重复（体验优化: 相同部件不会挤在一起） */
+function shuffleNoAdjacent<T extends { label: string }>(arr: T[], rnd: () => number): T[] {
+  const hasAdjacent = (a: T[]) => {
+    for (let i = 1; i < a.length; i++) if (a[i].label === a[i - 1].label) return true;
+    return false;
+  };
+  // 先尝试局部交换修复，失败则整体重洗（最多 20 轮，极端情况下也能收敛）
+  for (let round = 0; round < 20; round++) {
+    const a = shuffle(arr, rnd);
+    for (let guard = 0; guard < 30; guard++) {
+      let fixed = true;
+      for (let i = 1; i < a.length; i++) {
+        if (a[i].label === a[i - 1].label) {
+          let j = i + 1;
+          while (j < a.length && a[j].label === a[i].label) j++;
+          if (j < a.length) {
+            [a[i], a[j]] = [a[j], a[i]];
+            fixed = false;
+          }
+        }
+      }
+      if (fixed) break;
+    }
+    if (!hasAdjacent(a)) return a;
+  }
+  // 兜底: 仍有相邻重复, 但已尽力
+  return shuffle(arr, rnd);
+}
+
 interface PlacedWord {
   word: string;
   hint: string;
@@ -287,7 +316,7 @@ export function generatePuzzle(date: string, themeId?: string): HanziPuzzle {
       }
     }
   }
-  const shuffled = shuffle(tiles, rnd);
+  const shuffled = shuffleNoAdjacent(tiles, rnd);
 
   return {
     date,
