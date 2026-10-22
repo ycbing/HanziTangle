@@ -110,10 +110,11 @@ function drawShareCard(
         ctx.fill();
         continue;
       }
-      const done =
-        cellP.split
+      const done = cellP.split
+        ? "l" in cellP.split
           ? slots[slotKey(r, c, "l")] === cellP.split.l && slots[slotKey(r, c, "r")] === cellP.split.r
-          : slots[slotKey(r, c)] === cellP.char;
+          : slots[slotKey(r, c, "t")] === cellP.split.t && slots[slotKey(r, c, "b")] === cellP.split.b
+        : slots[slotKey(r, c)] === cellP.char;
       if (done) {
         ctx.fillStyle = "#fff";
         roundRect(ctx, x + 2, y + 2, cell - 4, cell - 4, 8);

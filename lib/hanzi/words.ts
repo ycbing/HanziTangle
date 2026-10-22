@@ -1,7 +1,7 @@
 // Hanzi Tangle - 词库
 // 硬约束: 每个字的左右部件拆分必须存在于 CHAR_SPLITS
 
-import { CHAR_SPLITS, WHOLE_CHAR_SET } from "./characters";
+import { getSplit, WHOLE_CHAR_SET } from "./characters";
 
 export interface HanziWord {
   word: string;
@@ -243,7 +243,7 @@ export const charWordIndex = (() => {
   const index = new Map<string, string[]>();
   for (const w of WORD_BANK) {
     for (const ch of w.word) {
-      if (!CHAR_SPLITS[ch] && !WHOLE_CHAR_SET.has(ch)) {
+      if (!getSplit(ch) && !WHOLE_CHAR_SET.has(ch)) {
         // 数据校验交给 scripts/verify-words.ts, 这里静默跳过 (避免阻断运行时)
         continue;
       }

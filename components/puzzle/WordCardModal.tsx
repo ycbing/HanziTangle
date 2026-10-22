@@ -272,7 +272,7 @@ export default function WordCardModal({ puzzle, onClose }: Props) {
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    {k.parts && (
+                    {k.parts && "l" in k.parts && (
                       <div className="mb-1 flex items-center gap-1.5 text-xs">
                         <span className="rounded-md bg-white px-1.5 py-0.5 font-bold text-amber-700 ring-1 ring-amber-200 dark:bg-stone-800 dark:text-amber-300 dark:ring-amber-500/40">
                           {k.parts.l}
@@ -280,6 +280,21 @@ export default function WordCardModal({ puzzle, onClose }: Props) {
                         <span className="text-stone-400">+</span>
                         <span className="rounded-md bg-white px-1.5 py-0.5 font-bold text-amber-700 ring-1 ring-amber-200 dark:bg-stone-800 dark:text-amber-300 dark:ring-amber-500/40">
                           {k.parts.r}
+                        </span>
+                        <span className="text-stone-400">=</span>
+                        <span className="rounded-md bg-teal-500 px-1.5 py-0.5 font-bold text-white">
+                          {ch}
+                        </span>
+                      </div>
+                    )}
+                    {k.parts && "t" in k.parts && (
+                      <div className="mb-1 flex items-center gap-1.5 text-xs">
+                        <span className="rounded-md bg-white px-1.5 py-0.5 font-bold text-amber-700 ring-1 ring-amber-200 dark:bg-stone-800 dark:text-amber-300 dark:ring-amber-500/40">
+                          {k.parts.t}
+                        </span>
+                        <span className="text-stone-400">+</span>
+                        <span className="rounded-md bg-white px-1.5 py-0.5 font-bold text-amber-700 ring-1 ring-amber-200 dark:bg-stone-800 dark:text-amber-300 dark:ring-amber-500/40">
+                          {k.parts.b}
                         </span>
                         <span className="text-stone-400">=</span>
                         <span className="rounded-md bg-teal-500 px-1.5 py-0.5 font-bold text-white">

@@ -31,8 +31,13 @@ export default function CluePanel({
       const cell = puzzle.grid[clue.row + dr * i][clue.col + dc * i];
       if (!cell) return false;
       if (cell.split) {
-        if (slots[slotKey(clue.row + dr * i, clue.col + dc * i, "l")] !== cell.split.l) return false;
-        if (slots[slotKey(clue.row + dr * i, clue.col + dc * i, "r")] !== cell.split.r) return false;
+        if ("l" in cell.split) {
+          if (slots[slotKey(clue.row + dr * i, clue.col + dc * i, "l")] !== cell.split.l) return false;
+          if (slots[slotKey(clue.row + dr * i, clue.col + dc * i, "r")] !== cell.split.r) return false;
+        } else {
+          if (slots[slotKey(clue.row + dr * i, clue.col + dc * i, "t")] !== cell.split.t) return false;
+          if (slots[slotKey(clue.row + dr * i, clue.col + dc * i, "b")] !== cell.split.b) return false;
+        }
       } else {
         if (slots[slotKey(clue.row + dr * i, clue.col + dc * i)] !== cell.char) return false;
       }
@@ -121,7 +126,7 @@ export default function CluePanel({
         </>
       )}
       <p className="mt-4 text-[11px] leading-relaxed text-stone-400 dark:text-stone-500">
-        💡 提示：点线索可高亮对应格子；拖部件进格子，左右部件齐全就拼成一个字。
+        💡 提示：点线索可高亮对应格子；拖部件进格子，上下/左右部件齐全就拼成一个字。
       </p>
     </aside>
   );

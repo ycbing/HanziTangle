@@ -1,7 +1,7 @@
 // Hanzi Tangle - 每日汉字拼字生成器 v2
 // 策略: ①横向平铺 2-3 个主题词 ②纵向主题词交叉 ③全词库交叉扩展 ④兜底平铺到 6+ 词
 
-import { CHAR_SPLITS, WHOLE_CHAR_SET } from "./characters";
+import { CHAR_SPLITS, WHOLE_CHAR_SET, getSplit } from "./characters";
 import { WORD_BANK, HANZI_THEMES, charWordIndex } from "./words";
 import type { HanziPuzzle, HanziTile, HanziClue, HanziCell } from "./types";
 
@@ -106,7 +106,7 @@ function placeWord(grid: Grid, w: PlacedWord): void {
       if (!cell.wordIds.includes(-1)) cell.wordIds.push(-1);
       continue;
     }
-    const split = CHAR_SPLITS[w.word[i]] ?? null;
+    const split = getSplit(w.word[i]);
     grid[r][c] = { char: w.word[i], split, wordIds: [-1] };
   }
 }
@@ -305,10 +305,15 @@ export function generatePuzzle(date: string, themeId?: string): HanziPuzzle {
   let tid = 0;
   for (const p of placed) {
     for (const ch of p.word) {
-      const split = CHAR_SPLITS[ch];
+      const split = getSplit(ch);
       if (split) {
-        tiles.push({ id: tid++, kind: "part", label: split.l });
-        tiles.push({ id: tid++, kind: "part", label: split.r });
+        if ("l" in split) {
+          tiles.push({ id: tid++, kind: "part", label: split.l });
+          tiles.push({ id: tid++, kind: "part", label: split.r });
+        } else {
+          tiles.push({ id: tid++, kind: "part", label: split.t });
+          tiles.push({ id: tid++, kind: "part", label: split.b });
+        }
       } else if (WHOLE_CHAR_SET.has(ch)) {
         tiles.push({ id: tid++, kind: "whole", label: ch });
       } else {

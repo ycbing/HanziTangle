@@ -14,7 +14,7 @@ export interface HanziClue {
 
 export interface HanziCell {
   char: string; // the target character
-  split: { l: string; r: string } | null; // null = whole char (no split)
+  split: { l: string; r: string } | { t: string; b: string } | null; // lr=左右, tb=上下, null=whole
   wordIds: number[];
   number?: number;
 }
@@ -37,9 +37,27 @@ export interface HanziPuzzle {
   tiles: HanziTile[]; // shuffled
 }
 
-/** slot key helpers: whole char = "r,c"; split = "r,c,l" | "r,c,r" */
-export function slotKey(r: number, c: number, side?: "l" | "r") {
+/** slot key helpers: whole = "r,c"; lr split = "r,c,l"|"r,c,r"; tb split = "r,c,t"|"r,c,b" */
+export function slotKey(r: number, c: number, side?: "l" | "r" | "t" | "b") {
   return side ? `${r},${c},${side}` : `${r},${c}`;
+}
+
+/** split 的两个槽位 key+目标（兼容 lr/tb） */
+export function splitSlots(
+  r: number,
+  c: number,
+  split: { l: string; r: string } | { t: string; b: string }
+): { key: string; label: string }[] {
+  if ("l" in split) {
+    return [
+      { key: slotKey(r, c, "l"), label: split.l },
+      { key: slotKey(r, c, "r"), label: split.r },
+    ];
+  }
+  return [
+    { key: slotKey(r, c, "t"), label: split.t },
+    { key: slotKey(r, c, "b"), label: split.b },
+  ];
 }
 
 /** all slot keys + target labels for a puzzle */
@@ -50,8 +68,7 @@ export function targetSlots(puzzle: HanziPuzzle): { key: string; label: string }
       const cell = puzzle.grid[r][c];
       if (!cell) continue;
       if (cell.split) {
-        out.push({ key: slotKey(r, c, "l"), label: cell.split.l });
-        out.push({ key: slotKey(r, c, "r"), label: cell.split.r });
+        out.push(...splitSlots(r, c, cell.split));
       } else {
         out.push({ key: slotKey(r, c), label: cell.char });
       }

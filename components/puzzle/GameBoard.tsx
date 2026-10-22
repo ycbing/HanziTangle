@@ -48,9 +48,15 @@ export default function GameBoard({
     const cell = puzzle.grid[r][c];
     if (!cell) return false;
     if (cell.split) {
+      if ("l" in cell.split) {
+        return (
+          slots[slotKey(r, c, "l")] === cell.split.l &&
+          slots[slotKey(r, c, "r")] === cell.split.r
+        );
+      }
       return (
-        slots[slotKey(r, c, "l")] === cell.split.l &&
-        slots[slotKey(r, c, "r")] === cell.split.r
+        slots[slotKey(r, c, "t")] === cell.split.t &&
+        slots[slotKey(r, c, "b")] === cell.split.b
       );
     }
     return slots[slotKey(r, c)] === cell.char;
@@ -61,10 +67,17 @@ export default function GameBoard({
     const cell = puzzle.grid[r][c];
     if (!cell || !selectedTile) return false;
     if (cell.split) {
-      const lk = slotKey(r, c, "l");
-      const rk = slotKey(r, c, "r");
-      if (slots[lk] !== cell.split.l && selectedTile.label === cell.split.l) return true;
-      if (slots[rk] !== cell.split.r && selectedTile.label === cell.split.r) return true;
+      if ("l" in cell.split) {
+        const lk = slotKey(r, c, "l");
+        const rk = slotKey(r, c, "r");
+        if (slots[lk] !== cell.split.l && selectedTile.label === cell.split.l) return true;
+        if (slots[rk] !== cell.split.r && selectedTile.label === cell.split.r) return true;
+        return false;
+      }
+      const tk = slotKey(r, c, "t");
+      const bk = slotKey(r, c, "b");
+      if (slots[tk] !== cell.split.t && selectedTile.label === cell.split.t) return true;
+      if (slots[bk] !== cell.split.b && selectedTile.label === cell.split.b) return true;
       return false;
     }
     return slots[slotKey(r, c)] !== cell.char && selectedTile.label === cell.char;
@@ -93,6 +106,8 @@ export default function GameBoard({
           const lk = slotKey(r, c, "l");
           const rk = slotKey(r, c, "r");
           const wk = slotKey(r, c);
+          const tk = slotKey(r, c, "t");
+          const bk = slotKey(r, c, "b");
 
           let bg = "bg-white/95 ring-1 ring-teal-300 dark:bg-stone-700/80 dark:ring-stone-600";
           if (revealed) bg = "bg-teal-300/80 ring-2 ring-teal-400 dark:bg-teal-500/60";
@@ -100,8 +115,10 @@ export default function GameBoard({
           else if (target) bg = "bg-emerald-100 ring-2 ring-emerald-400 ring-dashed dark:bg-emerald-500/15 dark:ring-emerald-400/60";
           else if (highlighted) bg = "bg-amber-100 ring-2 ring-amber-300 dark:bg-amber-400/20 dark:ring-amber-400/50";
 
-          const lv = cell.split ? slots[lk] : undefined;
-          const rv = cell.split ? slots[rk] : undefined;
+          const lv = cell.split && "l" in cell.split ? slots[lk] : undefined;
+          const rv = cell.split && "l" in cell.split ? slots[rk] : undefined;
+          const tv = cell.split && "t" in cell.split ? slots[tk] : undefined;
+          const bv = cell.split && "t" in cell.split ? slots[bk] : undefined;
 
           return (
             <button
@@ -130,7 +147,7 @@ export default function GameBoard({
                     </span>
                   )}
                 </span>
-              ) : cell.split ? (
+              ) : cell.split && "l" in cell.split ? (
                 // split cell: left/right slots
                 <div className="flex h-full w-full">
                   <div
@@ -146,6 +163,24 @@ export default function GameBoard({
                     }`}
                   >
                     {rv ?? ""}
+                  </div>
+                </div>
+              ) : cell.split ? (
+                // split cell: top/bottom slots
+                <div className="flex h-full w-full flex-col">
+                  <div
+                    className={`grid h-1/2 place-items-center border-b border-dashed border-teal-300/70 text-lg font-bold dark:border-stone-500 ${
+                      tv ? "text-amber-700 dark:text-amber-300" : "text-stone-400/60 dark:text-stone-500"
+                    }`}
+                  >
+                    {tv ?? ""}
+                  </div>
+                  <div
+                    className={`grid h-1/2 place-items-center text-lg font-bold ${
+                      bv ? "text-amber-700 dark:text-amber-300" : "text-stone-400/60 dark:text-stone-500"
+                    }`}
+                  >
+                    {bv ?? ""}
                   </div>
                 </div>
               ) : (

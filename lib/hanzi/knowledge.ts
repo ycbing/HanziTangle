@@ -2,7 +2,7 @@
 // 每日字卡的数据源: 部首含义 + 重点字造字故事 + 自动组装
 // 结构: 每个字 -> { story: 造字故事, example: 例句 }
 
-import { CHAR_SPLITS, VARIANT_NOTES, WHOLE_CHAR_SET } from "./characters";
+import { CHAR_SPLITS, CHAR_SPLITS_TB, VARIANT_NOTES, WHOLE_CHAR_SET, getSplit } from "./characters";
 import { charWordIndex } from "./words";
 import { CHAR_PINYIN } from "./pinyin-map";
 
@@ -274,7 +274,8 @@ export const CHAR_STORIES: Record<string, { story: string; example: string }> = 
 export interface CharKnowledge {
   char: string;
   pinyin: string;
-  parts: { l: string; r: string } | null; // 拆分部件
+  /** 拆分部件: lr 为左右结构, tb 为上下结构, null 为独体字 */
+  parts: { l: string; r: string } | { t: string; b: string } | null;
   story: string;
   example: string;
   words: string[]; // 组词 (来自词库)
@@ -282,7 +283,7 @@ export interface CharKnowledge {
 
 /** 根据字自动组装知识卡（手工故事优先，无则自动生成） */
 export function buildCharKnowledge(ch: string): CharKnowledge {
-  const split = CHAR_SPLITS[ch]; // {l, r} or undefined for whole chars
+  const split = getSplit(ch);
   const manual = CHAR_STORIES[ch];
   const pinyin = CHAR_PINYIN[ch] ?? "";
   const words = [...new Set(charWordIndex.get(ch) ?? [])].slice(0, 4);
@@ -293,10 +294,15 @@ export function buildCharKnowledge(ch: string): CharKnowledge {
   if (manual) {
     story = manual.story;
     example = manual.example;
-  } else if (split) {
+  } else if (split && "l" in split) {
     const lm = PART_MEANINGS[split.l] ? `「${split.l}」${PART_MEANINGS[split.l]}` : `「${split.l}」`;
     const rm = PART_MEANINGS[split.r] ? `「${split.r}」${PART_MEANINGS[split.r]}` : `「${split.r}」`;
     story = `${ch} = ${split.l} + ${split.r}。左边是${lm}，右边是${rm}，合在一起就是「${ch}」。`;
+    example = words.length > 0 ? `组词：${words.slice(0, 2).join("、")}。` : `今天认识了「${ch}」这个字。`;
+  } else if (split) {
+    const tm = PART_MEANINGS[split.t] ? `「${split.t}」${PART_MEANINGS[split.t]}` : `「${split.t}」`;
+    const bm = PART_MEANINGS[split.b] ? `「${split.b}」${PART_MEANINGS[split.b]}` : `「${split.b}」`;
+    story = `${ch} = ${split.t} + ${split.b}。上面是${tm}，下面是${bm}，合在一起就是「${ch}」。`;
     example = words.length > 0 ? `组词：${words.slice(0, 2).join("、")}。` : `今天认识了「${ch}」这个字。`;
   } else {
     story = `「${ch}」是一个独体字，像一幅小画，记住它的样子就能认识它。`;

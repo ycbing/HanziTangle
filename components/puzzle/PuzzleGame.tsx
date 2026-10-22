@@ -122,9 +122,15 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
       const cell = puzzle.grid[r][c];
       if (!cell) return false;
       if (cell.split) {
+        if ("l" in cell.split) {
+          return (
+            slots[slotKey(r, c, "l")] === cell.split.l &&
+            slots[slotKey(r, c, "r")] === cell.split.r
+          );
+        }
         return (
-          slots[slotKey(r, c, "l")] === cell.split.l &&
-          slots[slotKey(r, c, "r")] === cell.split.r
+          slots[slotKey(r, c, "t")] === cell.split.t &&
+          slots[slotKey(r, c, "b")] === cell.split.b
         );
       }
       return slots[slotKey(r, c)] === cell.char;
@@ -186,15 +192,28 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
       let key: string;
       let target: string;
       if (cell.split) {
-        const lk = slotKey(r, c, "l");
-        const rk = slotKey(r, c, "r");
-        if (slots[lk] === cell.split.l && slots[rk] === cell.split.r) return; // already complete
-        if (slots[lk] === cell.split.l) {
-          key = rk;
-          target = cell.split.r;
+        if ("l" in cell.split) {
+          const lk = slotKey(r, c, "l");
+          const rk = slotKey(r, c, "r");
+          if (slots[lk] === cell.split.l && slots[rk] === cell.split.r) return; // already complete
+          if (slots[lk] === cell.split.l) {
+            key = rk;
+            target = cell.split.r;
+          } else {
+            key = lk;
+            target = cell.split.l;
+          }
         } else {
-          key = lk;
-          target = cell.split.l;
+          const tk = slotKey(r, c, "t");
+          const bk = slotKey(r, c, "b");
+          if (slots[tk] === cell.split.t && slots[bk] === cell.split.b) return; // already complete
+          if (slots[tk] === cell.split.t) {
+            key = bk;
+            target = cell.split.b;
+          } else {
+            key = tk;
+            target = cell.split.t;
+          }
         }
       } else {
         key = slotKey(r, c);
@@ -231,7 +250,8 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
       const back: HanziTile[] = [];
       let touched = false;
       if (cell.split) {
-        for (const side of ["l", "r"] as const) {
+        const sides: ("l" | "r" | "t" | "b")[] = "l" in cell.split ? ["l", "r"] : ["t", "b"];
+        for (const side of sides) {
           const k = slotKey(r, c, side);
           const v = slots[k];
           if (v !== undefined) {
@@ -271,8 +291,13 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
         const cell = puzzle.grid[r][c];
         if (!cell) continue;
         if (cell.split) {
-          if (nextSlots[slotKey(r, c, "l")] !== cell.split.l) nextSlots[slotKey(r, c, "l")] = cell.split.l;
-          if (nextSlots[slotKey(r, c, "r")] !== cell.split.r) nextSlots[slotKey(r, c, "r")] = cell.split.r;
+          if ("l" in cell.split) {
+            if (nextSlots[slotKey(r, c, "l")] !== cell.split.l) nextSlots[slotKey(r, c, "l")] = cell.split.l;
+            if (nextSlots[slotKey(r, c, "r")] !== cell.split.r) nextSlots[slotKey(r, c, "r")] = cell.split.r;
+          } else {
+            if (nextSlots[slotKey(r, c, "t")] !== cell.split.t) nextSlots[slotKey(r, c, "t")] = cell.split.t;
+            if (nextSlots[slotKey(r, c, "b")] !== cell.split.b) nextSlots[slotKey(r, c, "b")] = cell.split.b;
+          }
         } else {
           if (nextSlots[slotKey(r, c)] !== cell.char) nextSlots[slotKey(r, c)] = cell.char;
         }
