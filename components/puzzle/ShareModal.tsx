@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
 import type { HanziPuzzle } from "@/lib/hanzi/types";
 import { slotKey } from "@/lib/hanzi/types";
 
@@ -23,7 +24,7 @@ function drawShareCard(
 ) {
   const scale = 2;
   const W = 420;
-  const H = 620;
+  const H = 720;
   canvas.width = W * scale;
   canvas.height = H * scale;
   const ctx = canvas.getContext("2d")!;
@@ -132,12 +133,42 @@ function drawShareCard(
   }
   ctx.textBaseline = "alphabetic";
 
-  // footer
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  ctx.font = "15px sans-serif";
-  ctx.fillText("把拆散的偏旁拼回汉字", W / 2, oy + gh + 44);
-  ctx.font = "bold 17px sans-serif";
-  ctx.fillText("来字缠，每天一题", W / 2, oy + gh + 72);
+  // footer: slogan (left) + QR code (right)
+  const qrUrl = `https://craftmind.cn/?date=${puzzle.date}`;
+  const qrSize = 104;
+  const qrX = W - 44 - qrSize;
+  const qrY = oy + gh + 30;
+
+  // QR white card
+  ctx.fillStyle = "#fff";
+  roundRect(ctx, qrX - 8, qrY - 6, qrSize + 16, qrSize + 16, 14);
+  ctx.fill();
+  const qr = QRCode.create(qrUrl, { errorCorrectionLevel: "M" });
+  const n = qr.modules.size;
+  const quiet = 2; // quiet zone modules for scannability
+  const qrCell = qrSize / (n + quiet * 2);
+  ctx.fillStyle = "#0f766e";
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (qr.modules.data[r * n + c]) {
+        ctx.fillRect(
+          qrX + (c + quiet) * qrCell,
+          qrY + (r + quiet) * qrCell,
+          Math.ceil(qrCell),
+          Math.ceil(qrCell)
+        );
+      }
+    }
+  }
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  ctx.font = "16px sans-serif";
+  ctx.fillText("把拆散的偏旁拼回汉字", 40, qrY + 34);
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 21px sans-serif";
+  ctx.fillText("扫码挑战今天的字", 40, qrY + 72);
+  ctx.textAlign = "center";
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -165,7 +196,7 @@ export default function ShareModal({ puzzle, slots, seconds, moves, streak, onCl
   const chars: string[] = [];
   const seen = new Set<string>();
   for (const clue of puzzle.clues) for (const ch of clue.word) if (!seen.has(ch)) { seen.add(ch); chars.push(ch); }
-  const shareText = `字缠 ${puzzle.date} · ${puzzle.theme}\n用 ${moves} 步拼出了：${chars.join("")}\n⏱ ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} · 🔥 连续 ${streak} 天\n来字缠，每天一题 → https://craftmind.cn/hanzi/`;
+  const shareText = `字缠 ${puzzle.date} · ${puzzle.theme}\n用 ${moves} 步拼出了：${chars.join("")}\n⏱ ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} · 🔥 连续 ${streak} 天\n来字缠，每天一题 → https://craftmind.cn/`;
 
   const doDownload = () => {
     if (!imgUrl) return;
@@ -192,7 +223,7 @@ export default function ShareModal({ puzzle, slots, seconds, moves, streak, onCl
       await navigator.share({
         title: "字缠 Hanzi Tangle",
         text: shareText,
-        url: "https://craftmind.cn/hanzi/",
+        url: "https://craftmind.cn/",
       });
     } catch {
       /* cancelled */
