@@ -105,16 +105,20 @@ export interface StreakInfo {
   best: number;
   lastCompleted: string | null; // YYYY-MM-DD
   history: string[]; // completed dates
+  themes: string[]; // themes completed (for explorer badge)
 }
 
 export function loadStreak(): StreakInfo {
   try {
     const raw = localStorage.getItem(STREAK_KEY);
     return raw
-      ? JSON.parse(raw)
-      : { current: 0, best: 0, lastCompleted: null, history: [] };
+      ? {
+          ...JSON.parse(raw),
+          themes: JSON.parse(raw).themes ?? [],
+        }
+      : { current: 0, best: 0, lastCompleted: null, history: [], themes: [] };
   } catch {
-    return { current: 0, best: 0, lastCompleted: null, history: [] };
+    return { current: 0, best: 0, lastCompleted: null, history: [], themes: [] };
   }
 }
 
@@ -124,7 +128,7 @@ export function saveStreak(s: StreakInfo) {
   } catch {}
 }
 
-export function recordCompletion(date: string): StreakInfo {
+export function recordCompletion(date: string, theme?: string): StreakInfo {
   const s = loadStreak();
   if (s.history.includes(date)) return s;
 
@@ -142,6 +146,7 @@ export function recordCompletion(date: string): StreakInfo {
     best: Math.max(s.best, current),
     lastCompleted: date,
     history: newHistory,
+    themes: theme && !s.themes.includes(theme) ? [...s.themes, theme] : s.themes,
   };
   saveStreak(next);
   return next;

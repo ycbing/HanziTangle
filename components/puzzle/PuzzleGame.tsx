@@ -14,6 +14,7 @@ import {
   recordMistake,
   type SavedDayState,
 } from "@/lib/game/storage";
+import { getBadgeStates, newlyUnlocked, type Badge } from "@/lib/game/achievements";
 import GameBoard from "./GameBoard";
 import TileTray from "./TileTray";
 import CluePanel from "./CluePanel";
@@ -70,6 +71,7 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
   const [wrongCell, setWrongCell] = useState<{ r: number; c: number; key: number } | null>(null);
   const [showShare, setShowShare] = useState(false);
   const [showWordCard, setShowWordCard] = useState(false);
+  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [streak, setStreak] = useState(() => loadStreak());
   const [settings, setSettings] = useState(() => loadSettings());
   const [elapsed, setElapsed] = useState(0);
@@ -160,8 +162,11 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
       if (done && !completed && !next.completed) {
         setCompleted(true);
         setDismissed(false);
-        const st = recordCompletion(date);
+        const prevBadges = getBadgeStates().filter((b) => b.unlocked).map((b) => b.badge.id);
+        const st = recordCompletion(date, puzzle.theme);
         setStreak(st);
+        // 新徽章检测（通关后可能解锁多个）
+        setNewBadges(newlyUnlocked(prevBadges));
         setTimeout(() => setShowShare(true), 1200);
       }
     },
@@ -336,6 +341,13 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
           >
             📖
           </Link>
+          <Link
+            href="/achievements"
+            className="grid h-9 w-9 place-items-center rounded-full bg-white/70 hover:bg-white dark:bg-white/10 dark:hover:bg-white/20"
+            title="成就徽章"
+          >
+            🏅
+          </Link>
           <button
             onClick={() => setSettings((s) => ({ ...s, pinyin: !s.pinyin }))}
             className={`grid h-9 place-items-center rounded-full px-2 text-xs font-bold transition ${
@@ -461,6 +473,23 @@ export default function PuzzleGame({ puzzle }: { puzzle: HanziPuzzle }) {
             <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-teal-100 px-4 py-1.5 font-bold text-teal-700 dark:bg-teal-500/20 dark:text-teal-300">
               🔥 连续 {streak.current} 天
             </div>
+            {newBadges.length > 0 && (
+              <div className="mt-3 rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:ring-amber-500/30">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-300">
+                  🎉 解锁新徽章
+                </p>
+                <div className="mt-1.5 flex flex-wrap justify-center gap-2">
+                  {newBadges.map((b) => (
+                    <span
+                      key={b.id}
+                      className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 shadow-sm dark:bg-stone-700 dark:text-stone-200"
+                    >
+                      {b.emoji} {b.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="mt-5 flex flex-col gap-2">
               <button
                 onClick={() => {
